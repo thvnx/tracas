@@ -1,0 +1,10 @@
+OASISFormat: 0.4
+Name:        tracas
+Version:     0
+Synopsis:    Trace analysis
+Authors:     Laurent Thévenoux
+License:     LGPL-3.0
+Executable tracas
+  Path:       src
+  BuildTools: ocamlbuild
+  MainIs:     tracas.ml
