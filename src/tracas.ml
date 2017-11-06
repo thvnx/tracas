@@ -34,7 +34,7 @@ let _ =
   begin
     match parse_with_error (Lexing.from_channel fd) with
     | Some value ->
-       Printf.fprintf stderr "%s\n" (Ir.output_value value)
+       Printf.printf "%s" (Ir.init_trace value)#dump
     | None -> ()
   end;
   close_in fd

@@ -28,7 +28,7 @@
 %token COMMA
 %token EOF
 
-%start <Ir.value option> trace
+%start <Json.value option> trace
 %%
 
 trace:
@@ -38,21 +38,21 @@ trace:
 
 value:
   | LEFT_BRACE; obj = object_fields; RIGHT_BRACE
-    { Ir.JSONAssoc obj }
+    { Json.JSONAssoc obj }
   | LEFT_BRACK; vl = array_values; RIGHT_BRACK
-    { Ir.JSONList vl }
+    { Json.JSONList vl }
   | s = STRING
-    { Ir.JSONString s }
+    { Json.JSONString s }
   | i = INT
-    { Ir.JSONInt i }
+    { Json.JSONInt i }
   | x = FLOAT
-    { Ir.JSONFloat x }
+    { Json.JSONFloat x }
   | TRUE
-    { Ir.JSONBool true }
+    { Json.JSONBool true }
   | FALSE
-    { Ir.JSONBool false }
+    { Json.JSONBool false }
   | NULL
-    { Ir.JSONNull }
+    { Json.JSONNull }
   ;
 
 object_fields: obj = rev_object_fields { List.rev obj };

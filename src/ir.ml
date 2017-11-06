@@ -14,40 +14,53 @@
   License along with tracas. If not, see
   <http://www.gnu.org/licenses/>. *)
 
-type value =
-  | JSONAssoc  of (string * value) list
-  | JSONBool   of bool
-  | JSONFloat  of float
-  | JSONInt    of int
-  | JSONList   of value list
-  | JSONNull
-  | JSONString of string
+class ir_instruction addr insn =
+  let bytes = (String.length insn) / 2 - 1 in
+  object
+    val mutable nb = 1
 
-let rec output_value = function
-  | JSONAssoc obj  -> print_assoc obj
-  | JSONList l     -> print_list l
-  | JSONString s   -> Printf.sprintf "\"%s\"" s
-  | JSONInt i      -> Printf.sprintf "%d" i
-  | JSONFloat x    -> Printf.sprintf "%f" x
-  | JSONBool true  -> Printf.sprintf "true"
-  | JSONBool false -> Printf.sprintf "false"
-  | JSONNull       -> Printf.sprintf "null"
+    method get_addr = addr
+    method incr = nb <- nb + 1
+    method dump = addr ^ " " ^ insn ^ " " ^ (string_of_int bytes) ^ "\n"
 
-and print_assoc obj =
-  Printf.sprintf "{ %s }" (
-                   String.concat ", " (
-                                   List.map (
-                                       fun (key, value) ->
-                                       Printf.sprintf "\"%s\": %s" key (output_value value)
-                                     ) obj
-                                 )
-                 )
-and print_list arr =
-  Printf.sprintf "[ %s ]" (
-                   String.concat ", " (
-                                   List.map (
-                                       fun value ->
-                                       Printf.sprintf "%s" (output_value value)
-                                     ) arr
-                                 )
-                 )
+  end;;
+
+type trace_element = Insn of ir_instruction | InsnRef of ir_instruction ref
+
+class ir_trace =
+object
+  val mutable trace = []
+
+  method add_insn addr insn =
+    match List.find_opt (
+              fun i -> match i with
+                         Insn i -> i#get_addr = addr
+                       | _ -> false
+            ) trace with
+    | Some (Insn i) ->
+       i#incr;
+       trace <- trace @ [InsnRef(ref i)]
+    | _             -> trace <- trace @ [Insn(new ir_instruction addr insn)]
+
+  method dump = String.concat "" (List.map (fun i -> match i with Insn i -> " " ^ i#dump | InsnRef i -> "*" ^ !i#dump) trace)
+
+end;;
+
+
+
+
+
+
+let rec init_trace value =
+  let trc = new ir_trace in
+  explore trc value
+and explore trc = function
+  | Json.JSONAssoc (("trace", trace)::_) -> explore_trace trc trace
+  | Json.JSONAssoc obj                   -> explore trc (Json.JSONAssoc (List.tl obj))    (* todo: explore info value *)
+  | _ -> Printf.fprintf stderr "cannot init trace (fun explore)\n"; exit 3
+and explore_trace trc = function
+  | Json.JSONAssoc l -> List.iter (fun i -> explore_instruction trc i) l; trc
+  | _ -> Printf.fprintf stderr "cannot init trace (fun explore_trace)\n"; exit 3
+and explore_instruction trc = function
+  | (addr, Json.JSONAssoc (("insn", Json.JSONString insn)::t)) -> trc#add_insn addr insn
+  | (s, _)                                                     -> () (* todo: get eot and length values *)
