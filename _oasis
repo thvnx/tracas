@@ -4,7 +4,12 @@ Version:     0
 Synopsis:    Trace analysis
 Authors:     Laurent Thévenoux
 License:     LGPL-3.0
+
+AlphaFeatures: ocamlbuild_more_args
+XOCamlbuildExtraArgs: -use-menhir -cflags -safe-string,-w,+a-4
+
 Executable tracas
-  Path:       src
-  BuildTools: ocamlbuild
-  MainIs:     tracas.ml
+  Path:           src
+  BuildTools:     ocamlbuild
+  MainIs:         tracas.ml
+  CompiledObject: best
