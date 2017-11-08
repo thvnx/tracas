@@ -62,5 +62,5 @@ and explore_trace trc = function
   | Json.JSONAssoc l -> List.iter (fun i -> explore_instruction trc i) l; trc
   | _ -> Printf.fprintf stderr "cannot init trace (fun explore_trace)\n"; exit 3
 and explore_instruction trc = function
-  | (addr, Json.JSONAssoc (("insn", Json.JSONString insn)::t)) -> trc#add_insn addr insn
-  | (s, _)                                                     -> () (* todo: get eot and length values *)
+  | (addr, Json.JSONAssoc (("insn", Json.JSONString insn)::_)) -> trc#add_insn addr insn
+  | (_, _)                                                     -> () (* todo: get eot and length values *)
