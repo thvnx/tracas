@@ -1,0 +1,4 @@
+description = "Capstone"
+version = "3"
+archive(byte) = "capstone.cmx ocaml.o"
+archive(native) = "capstone.cmx ocaml.o"
