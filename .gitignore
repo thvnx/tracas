@@ -1,4 +1,6 @@
 _build/
+_tags
 setup.*
 myocamlbuild.ml
 tracas.byte
+tracas.native
