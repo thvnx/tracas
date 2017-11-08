@@ -29,7 +29,7 @@ let parse_with_error lexbuf =
 
 
 let _ =
-  let trace = "../calliope/trace.json" in
+  let trace = "./trace.json" in
   let fd = open_in trace in
   begin
     match parse_with_error (Lexing.from_channel fd) with

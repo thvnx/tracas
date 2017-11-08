@@ -16,12 +16,13 @@
 
 class ir_instruction addr insn =
   let bytes = (String.length insn) / 2 - 1 in
+  let insn = Disa.disassemble insn in
   object
     val mutable nb = 1
 
     method get_addr = addr
     method incr = nb <- nb + 1
-    method dump = addr ^ " " ^ insn ^ " " ^ (string_of_int bytes) ^ "\n"
+    method dump = addr ^ " " ^ insn.Disa.mnemonic ^ " " ^ (string_of_int bytes) ^ "\n"
 
   end;;
 
