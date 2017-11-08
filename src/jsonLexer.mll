@@ -15,7 +15,6 @@
   <http://www.gnu.org/licenses/>. *)
 
 {
-open Lexing
 open JsonParser
 
 exception SyntaxError of string
