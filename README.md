@@ -7,4 +7,10 @@ Trace analysis
 oasis setup
 ocaml setup.ml -configure
 ocaml setup.ml -build
+ocaml setup.ml -install
+```
+
+#### How to use tracas?
+```bash
+tracas --help
 ```
