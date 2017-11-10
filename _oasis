@@ -6,11 +6,11 @@ Authors:     Laurent Thévenoux
 License:     LGPL-3.0
 
 AlphaFeatures: ocamlbuild_more_args
-XOCamlbuildExtraArgs: -use-menhir -cflags -safe-string,-w,+a-4 -lflags -cclib,-lcapstone
+XOCamlbuildExtraArgs: -use-menhir -cflags -safe-string,-w,+a-4-44-48 -lflags -cclib,-lcapstone
 
 Executable tracas
   Path:           src
   BuildTools:     ocamlbuild
-  BuildDepends:   capstone,str
+  BuildDepends:   capstone,str,cmdliner
   MainIs:         tracas.ml
   CompiledObject: best

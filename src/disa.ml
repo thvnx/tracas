@@ -16,7 +16,10 @@
 
 module CS = Capstone
 
-type insn = { mnemonic : string }
+type insn = { id: int; address: int; size: int; bytes: int array;
+              mnemonic: string; op_str: string;
+	      regs_read: int array; regs_write: int array;
+	      groups: int array;(* arch: CS.cs_arch;*) }
 
 let format insn =
   let rec split_bytes ?acc:(acc = []) i =
@@ -29,11 +32,11 @@ let format insn =
   let bytes = split_bytes (String.sub insn 2 ((String.length insn) - 2)) in
   String.init (List.length bytes) (fun i -> List.nth bytes i)
 
-let disassemble insn =
+let disassemble addr insn =
   (* code example: "\x21\x7c\x02\x9b\x21\x7c\x00\x53\x00\x40\x21\x4b\xe1\x0b\x40\xb9"*)
   let code = format insn in
   let (arch, mode, code, syntax) = (CS.CS_ARCH_ARM64, [CS.CS_MODE_ARM], code, 0L) in
-  let eee =
+  let i =
     let handle = CS.cs_open arch mode in
     (
       if syntax != 0L then
@@ -52,4 +55,7 @@ let disassemble insn =
       | _ -> failwith "Failed to close handle"; (* todo: be more specific *)
 
     )
-  in { mnemonic = eee.CS.mnemonic };
+  in { id = i.CS.id; address = addr; size = i.CS.size; bytes = i.CS.bytes;
+       mnemonic = i.CS.mnemonic; op_str = i.CS.op_str;
+       regs_read = i.CS.regs_read; regs_write = i.CS.regs_write;
+       groups = i.CS.groups; }

@@ -24,6 +24,7 @@ Create an OCaml package findable by _findlib_.
 ```bash
 cp META capstone/bindings/ocaml
 cd capstone/bindings/ocaml
+make
 ocamlfind install capstone META capstone.* ocaml.*
 # remove it with ocamlfind remove capstone
 ```

@@ -15,14 +15,16 @@
   <http://www.gnu.org/licenses/>. *)
 
 class ir_instruction addr insn =
-  let bytes = (String.length insn) / 2 - 1 in
-  let insn = Disa.disassemble insn in
+  let (address, mnemonic, size) =
+    let disa = Disa.disassemble addr insn in
+    (disa.Disa.address, disa.Disa.mnemonic, disa.Disa.size)
+  in
   object
     val mutable nb = 1
 
-    method get_addr = addr
+    method get_addr = address
     method incr = nb <- nb + 1
-    method dump = addr ^ " " ^ insn.Disa.mnemonic ^ " " ^ (string_of_int bytes) ^ "\n"
+    method dump = (string_of_int address) ^ " " ^ mnemonic ^ " " ^ (string_of_int size) ^ "\n"
 
   end;;
 
@@ -41,7 +43,8 @@ object
     | Some (Insn i) ->
        i#incr;
        trace <- trace @ [InsnRef(ref i)]
-    | _             -> trace <- trace @ [Insn(new ir_instruction addr insn)]
+    | _             ->
+       trace <- trace @ [Insn(new ir_instruction addr insn)]
 
   method dump = String.concat "" (List.map (fun i -> match i with Insn i -> " " ^ i#dump | InsnRef i -> "*" ^ !i#dump) trace)
 
@@ -58,10 +61,10 @@ let rec init_trace value =
 and explore trc = function
   | Json.JSONAssoc (("trace", trace)::_) -> explore_trace trc trace
   | Json.JSONAssoc obj                   -> explore trc (Json.JSONAssoc (List.tl obj))    (* todo: explore info value *)
-  | _ -> Printf.fprintf stderr "cannot init trace (fun explore)\n"; exit 3
+  | _ -> failwith "cannot init trace (fun explore)\n"
 and explore_trace trc = function
   | Json.JSONAssoc l -> List.iter (fun i -> explore_instruction trc i) l; trc
-  | _ -> Printf.fprintf stderr "cannot init trace (fun explore_trace)\n"; exit 3
+  | _ -> failwith "cannot init trace (fun explore_trace)\n"
 and explore_instruction trc = function
-  | (addr, Json.JSONAssoc (("insn", Json.JSONString insn)::_)) -> trc#add_insn addr insn
+  | (addr, Json.JSONAssoc (("insn", Json.JSONString insn)::_)) -> trc#add_insn (int_of_string addr) insn
   | (_, _)                                                     -> () (* todo: get eot and length values *)
