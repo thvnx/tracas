@@ -4,6 +4,7 @@ Version:     0
 Synopsis:    Trace analysis
 Authors:     Laurent Thévenoux
 License:     LGPL-3.0
+Plugins:     DevFiles (0.4)
 
 AlphaFeatures: ocamlbuild_more_args
 XOCamlbuildExtraArgs: -use-menhir -cflags -safe-string,-w,+a-4-44-48 -lflags -cclib,-lcapstone

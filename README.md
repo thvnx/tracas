@@ -5,9 +5,9 @@ Trace analysis
 ```bash
 # see also: capstone/README.md
 oasis setup
-ocaml setup.ml -configure
-ocaml setup.ml -build
-ocaml setup.ml -install
+./configure
+make
+make install # make uninstall to remove
 ```
 
 #### How to use tracas?
