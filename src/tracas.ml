@@ -31,7 +31,9 @@ let tracas trc =
   begin
     match parse_with_error (Lexing.from_channel fd) with
     | Some value ->
-       Printf.printf "%s" (Ir.init_trace value)#dump
+       let trc = Ir.init_trace value in
+       trc#identifying_basic_blocks;
+       Printf.printf "%s" trc#dump
     | None -> ()
   end;
   close_in fd

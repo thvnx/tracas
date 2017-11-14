@@ -45,6 +45,9 @@ let disassemble addr insn =
           match err with
           | _ -> failwith "error"; (* todo: be more specific *)
         );
+      let err = CS.cs_option handle CS.CS_OPT_DETAIL CS._CS_OPT_ON in
+      match err with
+      | _ -> ();
       (*Printf.printf "*************\n";
       List.iter ( fun insn ->
                   Printf.printf "%s 0x%x\t%s\t%s\n" code insn.CS.address insn.CS.mnemonic insn.CS.op_str
