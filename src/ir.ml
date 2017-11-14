@@ -27,10 +27,12 @@ class ir_instruction addr insn =
 
     method jump_p = jump
     method set_lead = lead <- true
+    method lead_p = lead
     method add_succ s = if not (List.mem s succ) then succ <- s :: succ
     method add_pred p = if not (List.mem p pred) then pred <- p :: pred
 
     method get_addr = address
+    method get_mnemonic = mnemonic
     method incr = nb <- nb + 1
     method dump =
       let zto_string l =
@@ -43,9 +45,22 @@ class ir_instruction addr insn =
 
 type trace_element = Insn of ir_instruction | Duplicate of ir_instruction
 
+class ir_bb trace =
+  let _ =
+    Printf.printf "--BBB--\n";
+    Printf.printf "%s\n" (String.concat ";" (List.map (fun i -> i#get_mnemonic) trace));
+    Printf.printf "--BBE--\n"
+  in
+object
+
+end;;
+
+type trace_bb = BasicBlock of ir_bb list
+
 class ir_trace =
 object
   val mutable trace = []
+  val mutable bb = []
 
   method add_insn addr insn =
     match List.find_opt (
@@ -81,9 +96,19 @@ object
 
       | Insn _ :: [] | Duplicate _ :: [] | [] -> ()
     in
+    let rec build_bb acc l =
+      match l with
+        Insn h :: t -> if h#lead_p && List.length acc <> 0
+                       then (bb <- bb @ [new ir_bb acc];
+                             build_bb [h] t)
+                       else build_bb (acc @ [h]) t
+      | [] -> bb <- bb @ [new ir_bb acc]
+
+    in
     let _ = match (List.hd trace) with
         Insn i | Duplicate i -> i#set_lead in
-    process trace
+    process trace;
+    build_bb [] trace; ()
 
 
 end;;
