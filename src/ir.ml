@@ -15,9 +15,9 @@
   <http://www.gnu.org/licenses/>. *)
 
 class ir_instruction addr insn =
-  let (address, mnemonic, size, groups) =
+  let (address, mnemonic, size, jump) =
     let disa = Disa.disassemble addr insn in
-    (disa.Disa.address, disa.Disa.mnemonic, disa.Disa.size, disa.Disa.groups)
+    (disa.Disa.address, disa.Disa.mnemonic, disa.Disa.size, disa.Disa.jump)
   in
   object
     val mutable nb = 1
@@ -25,6 +25,7 @@ class ir_instruction addr insn =
     val mutable succ:(ir_instruction list) = []
     val mutable lead = false
 
+    method jump_p = jump
     method set_lead = lead <- true
     method add_succ s = if not (List.mem s succ) then succ <- s :: succ
     method add_pred p = if not (List.mem p pred) then pred <- p :: pred
@@ -35,11 +36,8 @@ class ir_instruction addr insn =
       let zto_string l =
         String.concat "," (List.map (fun i -> string_of_int i#get_addr) l)
       in
-      let grp_to_string g =
-        String.concat "," (List.map (fun i -> string_of_int i) (Array.to_list g))
-      in
-      Printf.sprintf "%d %s %d %d %s %s %s (%s)\n" address mnemonic nb size (if lead then "\t:L" else "")
-                    (zto_string pred) (zto_string succ) (grp_to_string groups)
+      Printf.sprintf "%d %s %d %d %s %s %s %b\n" address mnemonic nb size (if lead then "\t:L" else "")
+                    (zto_string pred) (zto_string succ) jump
 
   end;;
 
@@ -71,11 +69,13 @@ object
     let rec process = function
         Insn x      :: Insn y :: t
       | Duplicate x :: Insn y :: t -> x#add_succ y;
+                                      if x#jump_p then y#set_lead;
                                       y#add_pred x;
                                       process (Insn(y)::t)
 
       | Insn x      :: Duplicate y :: t
       | Duplicate x :: Duplicate y :: t -> x#add_succ y;
+                                           if x#jump_p then y#set_lead;
                                            y#add_pred x;
                                            process (Duplicate(y)::t)
 

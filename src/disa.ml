@@ -19,7 +19,10 @@ module CS = Capstone
 type insn = { id: int; address: int; size: int; bytes: int array;
               mnemonic: string; op_str: string;
 	      regs_read: int array; regs_write: int array;
-	      groups: int array;(* arch: CS.cs_arch;*) }
+	      groups: int array; jump: bool;(* arch: CS.cs_arch;*) }
+
+let jump_insn_p g m =
+  Array.mem 1 g || Str.string_match (Str.regexp "ret") m 0
 
 let format insn =
   let rec split_bytes ?acc:(acc = []) i =
@@ -61,4 +64,4 @@ let disassemble addr insn =
   in { id = i.CS.id; address = addr; size = i.CS.size; bytes = i.CS.bytes;
        mnemonic = i.CS.mnemonic; op_str = i.CS.op_str;
        regs_read = i.CS.regs_read; regs_write = i.CS.regs_write;
-       groups = i.CS.groups; }
+       groups = i.CS.groups; jump = (jump_insn_p i.CS.groups i.CS.mnemonic)}
