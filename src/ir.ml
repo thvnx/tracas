@@ -31,6 +31,8 @@ class ir_instruction addr insn =
     method add_succ s = if not (List.mem s succ) then succ <- s :: succ
     method add_pred p = if not (List.mem p pred) then pred <- p :: pred
 
+    method get_succ = succ
+
     method get_addr = address
     method get_mnemonic = mnemonic
     method incr = nb <- nb + 1
@@ -46,16 +48,18 @@ class ir_instruction addr insn =
 type trace_element = Insn of ir_instruction | Duplicate of ir_instruction
 
 class ir_bb trace =
-  let _ =
+  (*let _ =
     Printf.printf "--BBB--\n";
     Printf.printf "%s\n" (String.concat ";" (List.map (fun i -> i#get_mnemonic) trace));
     Printf.printf "--BBE--\n"
-  in
-object
+  in*)
+  object
+
+    method get_trace:(ir_instruction list) = trace
 
 end;;
 
-type trace_bb = BasicBlock of ir_bb list
+
 
 class ir_trace =
 object
@@ -75,6 +79,18 @@ object
        trace <- trace @ [Insn(new ir_instruction addr insn)]
 
   method dump = String.concat "" (List.map (fun i -> match i with Insn i -> " " ^ i#dump | Duplicate i -> "*" ^ i#dump) trace)
+
+  method dot = (* naive dot output *)
+    Printf.printf "%s\n" (Dot.open_graph);
+    List.iteri (fun i b ->
+        Printf.printf "%s\n" (Dot.open_subgraph (string_of_int i));
+        List.iter (fun i ->
+            Printf.printf "%s\n" (Dot.node (string_of_int i#get_addr) (i#get_mnemonic));
+            List.iter (fun s -> Printf.printf "%s\n" (Dot.edge (string_of_int i#get_addr) (string_of_int s#get_addr) "")) i#get_succ
+          ) b#get_trace;
+        Printf.printf "%s\n" (Dot.close_subgraph (string_of_int i))
+      ) bb;
+    Printf.printf "%s\n" (Dot.close_graph);
 
   method identifying_basic_blocks =
     (* 1/ find leaders, then dertemine BB.
@@ -106,11 +122,13 @@ object
       | [] -> bb <- bb @ [new ir_bb acc]
 
     in
-    let _ = match (List.hd trace) with
-        Insn i | Duplicate i -> i#set_lead in
-    process trace;
-    build_bb [] trace; ()
-
+    try
+      let _ = match (List.hd trace) with
+          Insn i | Duplicate i -> i#set_lead in
+      process trace;
+      build_bb [] trace; ()
+    with
+      Failure ("hd") -> () (* what to do with empty trace? *)
 
 end;;
 
