@@ -102,6 +102,7 @@ object
                        then (bb <- bb @ [new ir_bb acc];
                              build_bb [h] t)
                        else build_bb (acc @ [h]) t
+      | Duplicate h :: t -> build_bb acc t (* sure? *)
       | [] -> bb <- bb @ [new ir_bb acc]
 
     in
