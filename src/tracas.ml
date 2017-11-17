@@ -33,8 +33,9 @@ let tracas trc =
     | Some value ->
        let trc = Ir.init_trace value in
        trc#identifying_basic_blocks;
-    (*Printf.printf "%s" trc#dump*)
-       trc#dot
+       (*Printf.printf "%s" trc#dump*)
+       (*trc#dot*)
+       ()
     | None -> ()
   end;
   close_in fd

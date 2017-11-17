@@ -92,43 +92,48 @@ object
       ) bb;
     Printf.printf "%s\n" (Dot.close_graph);
 
+
+  (* Identifying basic blocks requires the two following steps. *)
   method identifying_basic_blocks =
-    (* 1/ find leaders, then dertemine BB.
-         Leaders are: The first instruction in the trace, and Any instruction that
-         immediately follows a conditional or unconditional jump, or return.
-       2/ build blocks -> [leader; insn before next leader] *)
-    let rec process = function
-        Insn x      :: Insn y :: t
-      | Duplicate x :: Insn y :: t -> x#add_succ y;
-                                      if x#jump_p then y#set_lead;
-                                      y#add_pred x;
-                                      process (Insn(y)::t)
-
-      | Insn x      :: Duplicate y :: t
-      | Duplicate x :: Duplicate y :: t -> x#add_succ y;
-                                           if x#jump_p then y#set_lead;
-                                           y#add_pred x;
-                                           process (Duplicate(y)::t)
-
-      | Insn _ :: [] | Duplicate _ :: [] | [] -> ()
+    (* First step: find the leaders (a leader is the first instruction
+    of a basic block). Leaders are: the first instruction of the trace
+    and any instruction that immediately follows a conditional or
+    unconditional jump. *)
+    let find_leaders l =
+      let rec process = function
+          Insn x      :: Insn y :: t
+        | Duplicate x :: Insn y :: t -> x#add_succ y;
+                                        if x#jump_p then y#set_lead;
+                                        y#add_pred x;
+                                        process (Insn(y)::t)
+        | Insn x      :: Duplicate y :: t
+        | Duplicate x :: Duplicate y :: t -> x#add_succ y;
+                                             if x#jump_p then y#set_lead;
+                                             y#add_pred x;
+                                             process (Duplicate(y)::t)
+        | Insn _ :: [] | Duplicate _ :: [] | [] -> ()
+      in
+      if List.length l > 1 then
+        (
+          let _ = match (List.hd l) with Insn i | Duplicate i -> i#set_lead in
+          process l
+        );
+      (* else: empty trace, no leaders, no BB. *)
     in
-    let rec build_bb acc l =
-      match l with
+    (* Second step: once we have found the leaders, it is
+    straighforward to find the basic blocks. For each leader, its
+    basic block consists of the leader itself, plus all the
+    instrucLons until the next leader. *)
+    let rec build_bb acc = function
         Insn h :: t -> if h#lead_p && List.length acc <> 0
                        then (bb <- bb @ [new ir_bb acc];
                              build_bb [h] t)
                        else build_bb (acc @ [h]) t
-      | Duplicate h :: t -> build_bb acc t (* sure? *)
+      | Duplicate _ :: t -> build_bb acc t (* Do not rebuild a basic block for duplicated insn. *)
       | [] -> bb <- bb @ [new ir_bb acc]
-
     in
-    try
-      let _ = match (List.hd trace) with
-          Insn i | Duplicate i -> i#set_lead in
-      process trace;
-      build_bb [] trace; ()
-    with
-      Failure ("hd") -> () (* what to do with empty trace? *)
+    find_leaders trace;
+    build_bb [] trace
 
 end;;
 
