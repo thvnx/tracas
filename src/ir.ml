@@ -66,6 +66,8 @@ object
   val mutable trace = []
   val mutable bb = []
 
+  method rev = trace <- List.rev trace
+
   method add_insn addr insn =
     match List.find_opt (
               fun i -> match i with
@@ -74,9 +76,9 @@ object
             ) trace with
     | Some (Insn i) ->
        i#incr;
-       trace <- trace @ [Duplicate(i)]
+       trace <- Duplicate(i) :: trace
     | _             ->
-       trace <- trace @ [Insn(new ir_instruction addr insn)]
+       trace <- Insn(new ir_instruction addr insn) :: trace
 
   method dump = String.concat "" (List.map (fun i -> match i with Insn i -> " " ^ i#dump | Duplicate i -> "*" ^ i#dump) trace)
 
@@ -126,11 +128,12 @@ object
     instrucLons until the next leader. *)
     let rec build_bb acc = function
         Insn h :: t -> if h#lead_p && List.length acc <> 0
-                       then (bb <- bb @ [new ir_bb acc];
+                       then (bb <- new ir_bb (List.rev acc) :: bb;
                              build_bb [h] t)
-                       else build_bb (acc @ [h]) t
+                       else build_bb (h :: acc) t
       | Duplicate _ :: t -> build_bb acc t (* Do not rebuild a basic block for duplicated insn. *)
-      | [] -> bb <- bb @ [new ir_bb acc]
+      | [] -> bb <- new ir_bb (List.rev acc) :: bb;
+              bb <- List.rev bb
     in
     find_leaders trace;
     build_bb [] trace
@@ -144,7 +147,7 @@ end;;
 
 let rec init_trace value =
   let trc = new ir_trace in
-  explore trc value
+  (explore trc value)#rev; trc
 and explore trc = function
   | Json.JSONAssoc (("trace", trace)::_) -> explore_trace trc trace
   | Json.JSONAssoc obj                   -> explore trc (Json.JSONAssoc (List.tl obj))    (* todo: explore info value *)
