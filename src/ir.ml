@@ -48,14 +48,14 @@ class ir_instruction addr insn =
 type trace_element = Insn of ir_instruction | Duplicate of ir_instruction
 
 class ir_bb trace =
-  (*let _ =
-    Printf.printf "--BBB--\n";
-    Printf.printf "%s\n" (String.concat ";" (List.map (fun i -> i#get_mnemonic) trace));
-    Printf.printf "--BBE--\n"
-  in*)
   object
 
     method get_trace:(ir_instruction list) = trace
+
+    method dump =
+      Printf.printf "##BB_B\n";
+      List.iter (fun i -> Printf.printf "\t%s\n" i#get_mnemonic) trace;
+      Printf.printf "##BB_E\n"
 
 end;;
 
@@ -80,7 +80,8 @@ object
     | _             ->
        trace <- Insn(new ir_instruction addr insn) :: trace
 
-  method dump = String.concat "" (List.map (fun i -> match i with Insn i -> " " ^ i#dump | Duplicate i -> "*" ^ i#dump) trace)
+  method dump =
+    List.iter (fun b -> b#dump) bb
 
   method dot = (* naive dot output *)
     Printf.printf "%s\n" (Dot.open_graph);
@@ -102,7 +103,7 @@ object
     and any instruction that immediately follows a conditional or
     unconditional jump. *)
     let find_leaders l =
-      let rec process = function
+      let rec process = function (* fix: all relation between Dup and Isn are not required *)
           Insn x      :: Insn y :: t
         | Duplicate x :: Insn y :: t -> x#add_succ y;
                                         if x#jump_p then y#set_lead;
@@ -118,6 +119,7 @@ object
       if List.length l > 1 then
         (
           let _ = match (List.hd l) with Insn i | Duplicate i -> i#set_lead in
+(* FIX: first insn can't be a Duplicate *)
           process l
         );
       (* else: empty trace, no leaders, no BB. *)
@@ -132,11 +134,13 @@ object
                              build_bb [h] t)
                        else build_bb (h :: acc) t
       | Duplicate _ :: t -> build_bb acc t (* Do not rebuild a basic block for duplicated insn. *)
+(* FIX: keep trace of duplicate BB *)
       | [] -> bb <- new ir_bb (List.rev acc) :: bb;
               bb <- List.rev bb
     in
     find_leaders trace;
     build_bb [] trace
+(* FIX: set trace to [] *)
 
 end;;
 
